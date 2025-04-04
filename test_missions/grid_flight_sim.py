@@ -4,10 +4,11 @@ Simulator implementation of grid flight pattern for DJI Tello drone.
 This script executes a grid flight pattern with simulated photo capture at regular intervals,
 optimized for 3D modeling/photogrammetry simulation.
 """
-from missions.base_controller import DroneController
+from base_controller import DroneController
 import time
 import os
 import math
+from tello_wrapper import fast_sleep
 
 class GridFlightMission(DroneController):
     """Grid flight mission controller for simulator"""
@@ -79,26 +80,26 @@ class GridFlightMission(DroneController):
                         print(f"Moving to first grid position...")
                         if x > 0:
                             print(f"Moving forward {x}cm...")
-                            self.drone.fly_forward(x, "cm") if self.simulator_mode else self.drone.move_forward(x)
-                            time.sleep(1)
+                            self.drone.fly_forward(x, "cm")
+                            fast_sleep(0.2)
                         if y > 0:
                             print(f"Moving right {y}cm...")
-                            self.drone.fly_right(y, "cm") if self.simulator_mode else self.drone.move_right(y)
-                            time.sleep(1)
+                            self.drone.fly_right(y, "cm")
+                            fast_sleep(0.2)
                     # If starting a new row, just move sideways to the beginning/end of the row
                     elif col == (0 if not reverse_direction else self.grid_size-1):
                         print(f"Moving to next row...")
-                        self.drone.fly_right(self.grid_spacing, "cm") if self.simulator_mode else self.drone.move_right(self.grid_spacing)
-                        time.sleep(1)
+                        self.drone.fly_right(self.grid_spacing, "cm")
+                        fast_sleep(0.2)
                     # Otherwise move forward/backward along the row
                     else:
                         step = self.grid_spacing * (-1 if reverse_direction else 1)
                         print(f"Moving {abs(step)}cm {'backward' if step < 0 else 'forward'}...")
                         if step > 0:
-                            self.drone.fly_forward(step, "cm") if self.simulator_mode else self.drone.move_forward(step)
+                            self.drone.fly_forward(step, "cm")
                         else:
-                            self.drone.fly_backward(abs(step), "cm") if self.simulator_mode else self.drone.move_back(abs(step))
-                        time.sleep(1)
+                            self.drone.fly_backward(abs(step), "cm")
+                        fast_sleep(0.2)
                     
                     # Take photos along each grid cell
                     if self.photos_per_cell == 1:
@@ -116,12 +117,12 @@ class GridFlightMission(DroneController):
                                     # Move in micro-steps
                                     if i > 0:
                                         print(f"Micro-step forward: {micro_step}cm")
-                                        self.drone.fly_forward(micro_step, "cm") if self.simulator_mode else self.drone.move_forward(micro_step)
-                                        time.sleep(0.5)
+                                        self.drone.fly_forward(micro_step, "cm")
+                                        fast_sleep(0.1)
                                     if j > 0:
                                         print(f"Micro-step right: {micro_step}cm")
-                                        self.drone.fly_right(micro_step, "cm") if self.simulator_mode else self.drone.move_right(micro_step)
-                                        time.sleep(0.5)
+                                        self.drone.fly_right(micro_step, "cm")
+                                        fast_sleep(0.1)
                                         
                                 # Capture the photo
                                 sub_x = x + (i * self.photo_spacing)
@@ -130,10 +131,10 @@ class GridFlightMission(DroneController):
                                 
                         # Return to grid intersection for next move
                         if self.photos_per_cell > 1:
-                            self.drone.fly_backward((self.photos_per_cell-1) * self.photo_spacing, "cm") if self.simulator_mode else self.drone.move_back((self.photos_per_cell-1) * self.photo_spacing)
-                            time.sleep(0.5)
-                            self.drone.fly_left((self.photos_per_cell-1) * self.photo_spacing, "cm") if self.simulator_mode else self.drone.move_left((self.photos_per_cell-1) * self.photo_spacing)
-                            time.sleep(0.5)
+                            self.drone.fly_backward((self.photos_per_cell-1) * self.photo_spacing, "cm")
+                            fast_sleep(0.1)
+                            self.drone.fly_left((self.photos_per_cell-1) * self.photo_spacing, "cm")
+                            fast_sleep(0.1)
             
             print("\nGrid pattern completed!")
             print(f"Total photos simulated: {self.photo_count}")
@@ -148,13 +149,13 @@ class GridFlightMission(DroneController):
             # Return to home (0,0)
             if current_x > 0:
                 print(f"Moving back {current_x}cm...")
-                self.drone.fly_backward(current_x, "cm") if self.simulator_mode else self.drone.move_back(current_x)
-                time.sleep(2)
+                self.drone.fly_backward(current_x, "cm")
+                fast_sleep(0.5)
             
             if current_y > 0:
                 print(f"Moving left {current_y}cm...")
-                self.drone.fly_left(current_y, "cm") if self.simulator_mode else self.drone.move_left(current_y)
-                time.sleep(2)
+                self.drone.fly_left(current_y, "cm")
+                fast_sleep(0.5)
             
             # Land
             self.land()
@@ -231,8 +232,8 @@ class OrbitalFlightMission(DroneController):
             
             # Move forward to the orbital radius
             print(f"Moving forward to orbital position (radius: {self.radius}cm)...")
-            self.drone.fly_forward(self.radius, "cm") if self.simulator_mode else self.drone.move_forward(self.radius)
-            time.sleep(2)
+            self.drone.fly_forward(self.radius, "cm")
+            fast_sleep(0.5)
             
             # Execute the orbital pattern
             print("\nStarting orbital flight pattern...")
@@ -240,48 +241,53 @@ class OrbitalFlightMission(DroneController):
             angle_step = 360 / self.points
             
             # Take first photo facing the center
-            self.drone.yaw_right(180) if self.simulator_mode else self.drone.rotate_clockwise(180)  # Face the center
-            time.sleep(2)
+            self.drone.yaw_right(180)  # Face the center
+            fast_sleep(0.5)
             print("Taking first orbital photo (facing center)...")
             self._capture_orbital_photo(0)
             
             # Orbit around the subject
             for i in range(1, self.points):
                 angle = i * angle_step
+                print(f"\nMoving to orbital position {i+1}/{self.points} (angle: {angle:.1f}°)")
                 
-                # Calculate rotation to maintain facing the center
-                print(f"Rotating to orbital position {i+1}/{self.points} ({angle:.0f}°)...")
+                # Calculate the movement (we need to move in a circle)
+                # We're already at the radius, so we need to move in an arc
                 
-                # Move along the orbit (small clockwise steps)
-                self.drone.yaw_left(90) if self.simulator_mode else self.drone.rotate_counter_clockwise(90)  # Face tangent to the circle
-                time.sleep(1)
+                # For simplicity, we'll use a yaw-move-yaw approach
+                # First, yaw to face tangent to the circle
+                self.drone.yaw_right(90)
+                fast_sleep(0.3)
                 
-                # Calculate arc distance to move
-                arc_distance = 2 * math.pi * self.radius * (angle_step / 360)
-                print(f"Moving along orbital arc: {arc_distance:.0f}cm...")
-                self.drone.fly_forward(int(arc_distance), "cm") if self.simulator_mode else self.drone.move_forward(int(arc_distance))
-                time.sleep(2)
+                # Calculate chord length (straight-line distance between points on circle)
+                chord_length = 2 * self.radius * math.sin(math.radians(angle_step/2))
                 
-                # Rotate to face the center again
-                self.drone.yaw_right(90) if self.simulator_mode else self.drone.rotate_clockwise(90)  # Face center
-                time.sleep(1)
+                # Move along the chord
+                print(f"Moving {chord_length:.1f}cm along chord...")
+                self.drone.fly_forward(int(chord_length), "cm")
+                fast_sleep(0.5)
                 
-                # Take photo
-                print(f"Taking orbital photo at {angle:.0f}°...")
-                self._capture_orbital_photo(angle)
+                # Yaw to face center again
+                self.drone.yaw_right(90)
+                fast_sleep(0.3)
+                
+                # Take photo facing center
+                print(f"Taking orbital photo at position {i+1}...")
+                self._capture_orbital_photo(i)
             
             print("\nOrbital pattern completed!")
             print(f"Total photos simulated: {self.photo_count}")
             
-            # Return to starting position
-            print("Returning to starting position...")
+            # Return to home position
+            print("Returning to home position...")
             
-            # Move backward to return to center
-            print(f"Moving back to center...")
-            self.drone.yaw_left(180) if self.simulator_mode else self.drone.rotate_counter_clockwise(180)  # Face away from center
-            time.sleep(1)
-            self.drone.fly_forward(self.radius, "cm") if self.simulator_mode else self.drone.move_forward(self.radius)  # Move back to center
-            time.sleep(2)
+            # Yaw to face away from center
+            self.drone.yaw_right(180)
+            fast_sleep(0.3)
+            
+            # Move back to origin
+            self.drone.fly_forward(self.radius, "cm")
+            fast_sleep(0.5)
             
             # Land
             self.land()
@@ -293,26 +299,27 @@ class OrbitalFlightMission(DroneController):
             self.emergency_land()
             return False
     
-    def _capture_orbital_photo(self, angle):
+    def _capture_orbital_photo(self, position):
         """
         Capture a photo at an orbital position
         
         Args:
-            angle (float): Angle in degrees
+            position (int): Position number around the orbit
         """
         try:
             if self.simulator_mode:
                 # Simulated photo capture
-                print(f"[SIMULATOR] Photo captured at angle {angle:.0f}°")
+                print(f"[SIMULATOR] Photo captured at orbital position {position}")
                 self.photo_count += 1
             else:
                 # Real photo capture
                 timestamp = int(time.time())
-                filename = f"orbital_{angle:.0f}_{timestamp}.jpg"
+                angle = (position * 360 / self.points)
+                filename = f"orbital_pos{position}_angle{angle:.1f}_{timestamp}.jpg"
                 self.take_photo(filename, self.config['tello']['orbital_photo_dir'])
                 self.photo_count += 1
         except Exception as e:
-            print(f"Error capturing orbital photo at {angle:.0f}°: {e}")
+            print(f"Error capturing photo at orbital position {position}: {e}")
 
 
 if __name__ == "__main__":

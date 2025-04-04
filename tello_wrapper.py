@@ -21,6 +21,20 @@ except ImportError:
 # Always import the real Tello
 from djitellopy import Tello as RealTello
 
+# Utility function for optimized sleep
+def fast_sleep(seconds):
+    """
+    Sleep function that respects the DRONE_FAST_MODE environment variable.
+    When in fast mode, sleep times are reduced.
+    
+    Args:
+        seconds (float): Time to sleep in seconds
+    """
+    if os.environ.get("DRONE_FAST_MODE") == "1":
+        # In fast mode, reduce sleep times by 75%
+        time.sleep(max(0.05, seconds * 0.25))
+    else:
+        time.sleep(seconds)
 
 class TelloWrapper:
     """
@@ -94,7 +108,7 @@ class TelloWrapper:
                 }
             },
             "tello": {
-                "default_speed": 50,
+                "default_speed": 100,
                 "emergency_stop": True,
                 "photo_dir": "photos",
                 "grid_photo_dir": "photos/grid",
@@ -105,8 +119,10 @@ class TelloWrapper:
         # If no config path provided, check some default locations
         if config_path is None:
             possible_paths = [
+                "simulator_config.json",
                 "config/config.json",
-                os.path.join(os.path.dirname(__file__), "../config/config.json"),
+                os.path.join(os.path.dirname(__file__), "simulator_config.json"),
+                os.path.join(os.path.dirname(__file__), "config/config.json"),
                 os.path.join(os.path.expanduser("~"), ".tello/config.json")
             ]
             
@@ -203,7 +219,7 @@ class TelloWrapper:
                 
             print("Taking off...")
             self.drone.takeoff()
-            time.sleep(2)  # Give time to stabilize
+            fast_sleep(1)  # Reduced stabilization time
             return True
         except Exception as e:
             print(f"Error during takeoff: {e}")

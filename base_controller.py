@@ -11,7 +11,7 @@ import sys
 from pathlib import Path
 
 # Import the TelloWrapper
-from missions.tello_wrapper import TelloWrapper
+from tello_wrapper import TelloWrapper
 
 class DroneController:
     """Base class for drone mission controllers"""
@@ -28,6 +28,13 @@ class DroneController:
         self.drone = self.tello.drone  # For direct access if needed
         self.config = self.tello.config
         self.simulator_mode = self.tello.simulator_mode
+        
+        # Set higher speed for simulator
+        if self.simulator_mode and hasattr(self.drone, 'set_speed'):
+            try:
+                self.drone.set_speed(100)  # Set to maximum speed
+            except:
+                pass  # Ignore if set_speed is not available
         
         # Photo storage paths
         self._ensure_photo_directories()

@@ -3,9 +3,10 @@
 Simulator implementation of square flight pattern for DJI Tello drone.
 This script executes a square flight pattern with simulated photo capture at each corner.
 """
-from missions.base_controller import DroneController
+from base_controller import DroneController
 import time
 import os
+from tello_wrapper import fast_sleep
 
 class SquareFlightMission(DroneController):
     """Square flight mission controller for simulator"""
@@ -47,45 +48,45 @@ class SquareFlightMission(DroneController):
             
             # Move to corner 2
             print("Moving to corner 2...")
-            self.drone.move_forward(self.side_length)
-            time.sleep(2)
+            self.drone.fly_forward(self.side_length, "cm")
+            fast_sleep(0.5)
             print("Corner 2: Reached")
             self._take_corner_photo(2)
             
             # Rotate 90 degrees
-            self.drone.rotate_clockwise(90)
-            time.sleep(2)
+            self.drone.yaw_right(90)
+            fast_sleep(0.5)
             
             # Move to corner 3
             print("Moving to corner 3...")
-            self.drone.move_forward(self.side_length)
-            time.sleep(2)
+            self.drone.fly_forward(self.side_length, "cm")
+            fast_sleep(0.5)
             print("Corner 3: Reached")
             self._take_corner_photo(3)
             
             # Rotate 90 degrees
-            self.drone.rotate_clockwise(90)
-            time.sleep(2)
+            self.drone.yaw_right(90)
+            fast_sleep(0.5)
             
             # Move to corner 4
             print("Moving to corner 4...")
-            self.drone.move_forward(self.side_length)
-            time.sleep(2)
+            self.drone.fly_forward(self.side_length, "cm")
+            fast_sleep(0.5)
             print("Corner 4: Reached")
             self._take_corner_photo(4)
             
             # Rotate 90 degrees
-            self.drone.rotate_clockwise(90)
-            time.sleep(2)
+            self.drone.yaw_right(90)
+            fast_sleep(0.5)
             
             # Return to starting position (complete the square)
             print("Returning to starting position...")
-            self.drone.move_forward(self.side_length)
-            time.sleep(2)
+            self.drone.fly_forward(self.side_length, "cm")
+            fast_sleep(0.5)
             
             # Final rotation to original orientation
-            self.drone.rotate_clockwise(90)
-            time.sleep(2)
+            self.drone.yaw_right(90)
+            fast_sleep(0.5)
             
             print("Square pattern completed!")
             print(f"Total corners visited: {self.corners_visited}/4")
