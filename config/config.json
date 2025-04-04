@@ -1,0 +1,17 @@
+{
+    "simulator": {
+        "enabled": true,
+        "key": "d5de8fd3-667d-4781-81a4-d52638fea1f7",
+        "chrome_settings": {
+            "allow_insecure_content": true,
+            "simulator_url": "https://coding-sim.droneblocks.io/"
+        }
+    },
+    "tello": {
+        "default_speed": 30,
+        "emergency_stop": true,
+        "photo_dir": "photos",
+        "grid_photo_dir": "photos/grid",
+        "orbital_photo_dir": "photos/orbital"
+    }
+} 

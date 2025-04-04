@@ -1,4 +1,6 @@
-djitellopy
-opencv-python
-numpy
-matplotlib 
+djitellopy>=2.5.0
+DroneBlocksTelloSimulator>=1.1.1
+opencv-python>=4.7.0
+numpy>=1.19.0
+matplotlib>=3.3.0
+python-dotenv>=1.0.0 
